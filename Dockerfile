@@ -1,5 +1,5 @@
 FROM debian:bookworm
-LABEL Name=dockerphp55 Version=0.0.1
+LABEL Name=dockerphp5538 Version=1.0.0
 
 # RUN apt-get -y update && apt-get install -y fortunes
 # CMD ["sh", "-c", "/usr/games/fortune -a | cowsay"]
@@ -42,6 +42,7 @@ RUN dpkg -i mysql-apt-config_0.8.33-1_all.deb \
     && apt-get install -y \
     libmysql++-dev default-mysql-client default-mysql-server 
 
+# php5.5時点では2.7までしか対応していないらしい
 RUN tar xvf bison-2.7.1.tar.gz \
     && unzip icu-60.3.zip \
     && tar xvf php-5.5.38.tar.bz2 \
@@ -51,6 +52,7 @@ RUN tar xvf bison-2.7.1.tar.gz \
 RUN cd bison-2.7.1 && cat ../110-glibc-change-work-around.patch | git apply - \
     && ./configure --prefix=/opt/bison-2.7.1 && make -j4 && make install
 
+# php5.5には60が必要らしい
 RUN cd icu-release-60-3/icu4c/source \
     && CXXFLAGS=-std=c++11 CFLAGS=-std=c11 ./runConfigureICU Linux --prefix=/opt/icu4c-60.3 \
     && make -j4 \
@@ -63,7 +65,8 @@ RUN ln -s /usr/include/x86_64-linux-gnu/curl /usr/include/curl
 # https://wiki.php.net/internals/windows/stepbystepbuild
 # https://qiita.com/shadowhat/items/ec8b2b8135b65400608b
 RUN cd php-5.5.38 \
-    && ./configure --enable-cli --enable-intl --enable-mbstring --enable-fpm \
+    && ./configure \
+        --enable-cli --enable-intl --enable-mbstring --enable-fpm \
         --with-mysqli  \
         --with-pdo-mysql \
         --with-fpm-user=www-data \
@@ -75,6 +78,8 @@ RUN cd php-5.5.38 \
     && make -j4 \
     && make install
 
+# --enable-all する場合はbzip2を個別にビルドする
+#
 # TODO: phpでmake testが一部失敗している。大丈夫か確認する
 # - zend multibyte (8) [ext/mbstring/tests/zend_multibyte-08.phpt] (warn: XFAIL section but test passes)
 # - Phar: bug #69958: Segfault in Phar::convertToData on invalid file [ext/phar/tests/bug69958.phpt] (warn: XFAIL section but test passes)
